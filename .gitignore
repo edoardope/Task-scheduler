@@ -1,0 +1,10 @@
+node_modules/
+out/
+dist/
+build/
+.context/
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
