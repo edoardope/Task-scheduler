@@ -102,3 +102,73 @@ export interface TrendDataPoint {
   completed: number
   ratio: number
 }
+
+// ---- AnimalHub (Husbandry Hub) Integration ----
+
+export type HubEventType =
+  | 'Feeding'
+  | 'Manutenzione'
+  | 'Test'
+  | 'HealthVet'
+  | 'Pesa'
+  | 'Acquisto'
+  | 'Altro'
+
+export interface HubScheduledEvent {
+  id: string
+  label: string
+  type: HubEventType
+  targetId: string
+  targetName: string
+  frequencyDays: number | null
+  nextDueDate: string // YYYY-MM-DD
+  active: boolean
+  single: boolean
+  meta: Record<string, string | boolean>
+  ignoreMissedUntil: string | null
+  ignoreTodayDate: string | null
+  createdAt: string
+  // Computed
+  status?: 'today' | 'missed' | 'future'
+}
+
+export interface HubCompleteInput {
+  detail?: string
+  notes?: string
+  meta?: Record<string, string | boolean>
+}
+
+export interface AnimalHubStatus {
+  enabled: boolean
+  connected: boolean
+  dbPath: string | null
+  appRunning: boolean
+  lastSync: string | null
+}
+
+// Meta field definitions per event type
+export const HUB_META_FIELDS: Record<HubEventType, { key: string; label: string }[]> = {
+  Feeding: [
+    { key: 'food', label: 'Alimento' },
+    { key: 'amount', label: 'Quantità' }
+  ],
+  Test: [
+    { key: 'param', label: 'Parametro' },
+    { key: 'value', label: 'Valore' }
+  ],
+  Manutenzione: [
+    { key: 'added', label: 'Aggiunto' },
+    { key: 'removed', label: 'Rimosso' }
+  ],
+  HealthVet: [
+    { key: 'reason', label: 'Motivo' },
+    { key: 'cost', label: 'Costo' }
+  ],
+  Pesa: [{ key: 'weight', label: 'Peso' }],
+  Acquisto: [
+    { key: 'item', label: 'Oggetto' },
+    { key: 'cost', label: 'Costo' },
+    { key: 'reason', label: 'Ragione' }
+  ],
+  Altro: []
+}

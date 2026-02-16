@@ -11,7 +11,8 @@ import {
 } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { useCalendarStore } from '@/stores/useCalendarStore'
-import type { Task } from '../../../../../shared/types'
+import { useAnimalHubStore } from '@/stores/useAnimalHubStore'
+import type { Task, HubScheduledEvent } from '../../../../../shared/types'
 import { cn } from '@/lib/utils'
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
@@ -28,8 +29,14 @@ function getTasksForDay(tasks: Task[], day: Date) {
   )
 }
 
+function getHubEventsForDay(events: HubScheduledEvent[], day: Date) {
+  const dateStr = format(day, 'yyyy-MM-dd')
+  return events.filter((e) => e.nextDueDate === dateStr)
+}
+
 export function CalendarGrid({ tasks }: CalendarGridProps) {
   const { currentDate, selectedDate, selectDate } = useCalendarStore()
+  const { allEvents } = useAnimalHubStore()
 
   const monthStart = startOfMonth(currentDate)
   const monthEnd = endOfMonth(currentDate)
@@ -55,6 +62,7 @@ export function CalendarGrid({ tasks }: CalendarGridProps) {
       <div className="grid grid-cols-7">
         {days.map((day) => {
           const dayTasks = getTasksForDay(tasks, day)
+          const dayHubEvents = getHubEventsForDay(allEvents, day)
           const inMonth = isSameMonth(day, currentDate)
           const today = isToday(day)
           const selected = selectedDate ? isSameDay(day, selectedDate) : false
@@ -87,15 +95,15 @@ export function CalendarGrid({ tasks }: CalendarGridProps) {
                 {format(day, 'd')}
               </span>
 
-              {/* Task dots */}
-              {dayTasks.length > 0 && (
+              {/* Task and Hub event dots */}
+              {(dayTasks.length > 0 || dayHubEvents.length > 0) && (
                 <div className="mt-1 flex flex-wrap gap-0.5">
-                  {dayTasks.slice(0, 4).map((task, i) => {
+                  {dayTasks.slice(0, 3).map((task, i) => {
                     const isComplete =
                       task.status === 'completed' || task.isCompleted
                     return (
                       <span
-                        key={`${task.id}-${i}`}
+                        key={`task-${task.id}-${i}`}
                         className={cn(
                           'h-1.5 w-1.5 rounded-full',
                           isComplete
@@ -112,9 +120,15 @@ export function CalendarGrid({ tasks }: CalendarGridProps) {
                       />
                     )
                   })}
-                  {dayTasks.length > 4 && (
+                  {dayHubEvents.slice(0, 4 - dayTasks.length).map((event, i) => (
+                    <span
+                      key={`hub-${event.id}-${i}`}
+                      className="h-1.5 w-1.5 rounded-full bg-teal-500"
+                    />
+                  ))}
+                  {dayTasks.length + dayHubEvents.length > 4 && (
                     <span className="text-[10px] text-muted-foreground">
-                      +{dayTasks.length - 4}
+                      +{dayTasks.length + dayHubEvents.length - 4}
                     </span>
                   )}
                 </div>

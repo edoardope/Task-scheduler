@@ -4,17 +4,23 @@ import type { DashboardStats, StreakInfo } from '../../../../../shared/types'
 interface StatsCardsProps {
   dashboard: DashboardStats | null
   streak: StreakInfo | null
+  hubTodayCount?: number
+  hubMissedCount?: number
 }
 
-export function StatsCards({ dashboard, streak }: StatsCardsProps) {
+export function StatsCards({ dashboard, streak, hubTodayCount = 0, hubMissedCount = 0 }: StatsCardsProps) {
+  const totalToday = (dashboard?.totalToday ?? 0) + hubTodayCount
+  const completedToday = dashboard?.completedToday ?? 0
+  const overdueCount = (dashboard?.overdueCount ?? 0) + hubMissedCount
+
   const cards = [
     {
       label: 'Oggi',
       value: dashboard
-        ? `${dashboard.completedToday}/${dashboard.totalToday}`
+        ? `${completedToday}/${totalToday}`
         : '-',
-      sub: dashboard && dashboard.totalToday > 0
-        ? `${Math.round(dashboard.successRatio * 100)}% completato`
+      sub: dashboard && totalToday > 0
+        ? `${Math.round((completedToday / totalToday) * 100)}% completato`
         : 'Nessun task',
       icon: CheckCircle2,
       color: 'text-emerald-500'
@@ -39,12 +45,12 @@ export function StatsCards({ dashboard, streak }: StatsCardsProps) {
     },
     {
       label: 'Scaduti',
-      value: dashboard ? `${dashboard.overdueCount}` : '-',
-      sub: dashboard && dashboard.overdueCount > 0
+      value: dashboard ? `${overdueCount}` : '-',
+      sub: overdueCount > 0
         ? 'Richiedono attenzione'
         : 'Tutto in regola',
       icon: AlertTriangle,
-      color: dashboard && dashboard.overdueCount > 0 ? 'text-red-500' : 'text-emerald-500'
+      color: overdueCount > 0 ? 'text-red-500' : 'text-emerald-500'
     }
   ]
 

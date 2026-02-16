@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useCalendarStore } from '@/stores/useCalendarStore'
 import { useTaskStore } from '@/stores/useTaskStore'
+import { useAnimalHubStore } from '@/stores/useAnimalHubStore'
 import {
   startOfMonth,
   endOfMonth,
@@ -15,6 +16,7 @@ import { DayDetail } from '@/components/calendar/DayDetail'
 export function CalendarPage() {
   const { currentDate, selectedDate } = useCalendarStore()
   const { fetchTasksForRange, tasks } = useTaskStore()
+  const { status, allEvents, fetchStatus, fetchEvents } = useAnimalHubStore()
 
   useEffect(() => {
     const monthStart = startOfMonth(currentDate)
@@ -24,6 +26,18 @@ export function CalendarPage() {
 
     fetchTasksForRange(format(gridStart, 'yyyy-MM-dd'), format(gridEnd, 'yyyy-MM-dd'))
   }, [currentDate, fetchTasksForRange])
+
+  useEffect(() => {
+    fetchStatus()
+  }, [fetchStatus])
+
+  useEffect(() => {
+    if (status?.connected) {
+      fetchEvents()
+    }
+  }, [status?.connected, fetchEvents])
+
+  const selectedDateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
@@ -36,14 +50,16 @@ export function CalendarPage() {
           <DayDetail
             date={selectedDate}
             tasks={tasks.filter((t) => {
-              if (!selectedDate) return false
-              const dateStr = format(selectedDate, 'yyyy-MM-dd')
+              if (!selectedDateStr) return false
               return (
-                t.scheduledDate === dateStr ||
-                t.deadline === dateStr ||
-                t.occurrenceDate === dateStr
+                t.scheduledDate === selectedDateStr ||
+                t.deadline === selectedDateStr ||
+                t.occurrenceDate === selectedDateStr
               )
             })}
+            hubEvents={allEvents.filter((e) =>
+              selectedDateStr && e.nextDueDate === selectedDateStr
+            )}
           />
         </div>
       </div>

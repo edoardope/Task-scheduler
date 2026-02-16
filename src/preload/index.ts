@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { CreateTaskInput, UpdateTaskInput, CreateCategoryInput } from '../../shared/types'
+import type { CreateTaskInput, UpdateTaskInput, CreateCategoryInput, HubCompleteInput } from '../../shared/types'
 
 const api = {
   // Tasks
@@ -28,7 +28,27 @@ const api = {
   // Stats
   getDashboardStats: () => ipcRenderer.invoke('stats:dashboard'),
   getStreakInfo: () => ipcRenderer.invoke('stats:streak'),
-  getCompletionTrend: (days: number) => ipcRenderer.invoke('stats:trend', days)
+  getCompletionTrend: (days: number) => ipcRenderer.invoke('stats:trend', days),
+
+  // Settings
+  getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
+  setSetting: (key: string, value: string) => ipcRenderer.invoke('settings:set', key, value),
+  deleteSetting: (key: string) => ipcRenderer.invoke('settings:delete', key),
+  selectDirectory: () => ipcRenderer.invoke('settings:selectDirectory'),
+
+  // AnimalHub
+  hubGetStatus: () => ipcRenderer.invoke('hub:status'),
+  hubConnect: () => ipcRenderer.invoke('hub:connect'),
+  hubDisconnect: () => ipcRenderer.invoke('hub:disconnect'),
+  hubGetScheduledToday: () => ipcRenderer.invoke('hub:scheduled:today'),
+  hubGetScheduledMissed: () => ipcRenderer.invoke('hub:scheduled:missed'),
+  hubGetScheduledFuture: (days: number) => ipcRenderer.invoke('hub:scheduled:future', days),
+  hubGetAllScheduled: () => ipcRenderer.invoke('hub:scheduled:all'),
+  hubCompleteEvent: (id: string, input: HubCompleteInput) =>
+    ipcRenderer.invoke('hub:complete', id, input),
+  hubSkipEvent: (id: string) => ipcRenderer.invoke('hub:skip', id),
+  hubDismissEvent: (id: string) => ipcRenderer.invoke('hub:dismiss', id),
+  hubIsAppRunning: () => ipcRenderer.invoke('hub:isRunning')
 }
 
 contextBridge.exposeInMainWorld('api', api)

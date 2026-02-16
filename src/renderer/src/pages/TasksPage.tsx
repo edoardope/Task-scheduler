@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTaskStore } from '@/stores/useTaskStore'
 import { useCategoryStore } from '@/stores/useCategoryStore'
+import { useAnimalHubStore } from '@/stores/useAnimalHubStore'
 import { TaskList } from '@/components/tasks/TaskList'
 import { TaskForm } from '@/components/tasks/TaskForm'
-import { Plus, Filter } from 'lucide-react'
+import { HubEventCard } from '@/components/animalhub/HubEventCard'
+import { Plus, Filter, Bug } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Priority, TaskStatus } from '../../../../shared/types'
 
@@ -12,6 +14,7 @@ type StatusFilterValue = TaskStatus | 'all' | 'overdue'
 export function TasksPage() {
   const { tasks, fetchAllTasks } = useTaskStore()
   const { fetchCategories, fetchTags } = useCategoryStore()
+  const { status, todayEvents, missedEvents, fetchStatus, fetchEvents } = useAnimalHubStore()
   const [showForm, setShowForm] = useState(false)
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('all')
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all')
@@ -21,7 +24,14 @@ export function TasksPage() {
     fetchAllTasks()
     fetchCategories()
     fetchTags()
-  }, [fetchAllTasks, fetchCategories, fetchTags])
+    fetchStatus()
+  }, [fetchAllTasks, fetchCategories, fetchTags, fetchStatus])
+
+  useEffect(() => {
+    if (status?.connected) {
+      fetchEvents()
+    }
+  }, [status?.connected, fetchEvents])
 
   const today = format(new Date(), 'yyyy-MM-dd')
 
@@ -34,6 +44,9 @@ export function TasksPage() {
     if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false
     return true
   })
+
+  const isConnected = status?.connected === true
+  const hubEvents = [...missedEvents, ...todayEvents]
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
@@ -90,6 +103,20 @@ export function TasksPage() {
       )}
 
       <TaskList tasks={filtered} />
+
+      {isConnected && hubEvents.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <Bug className="h-5 w-5 text-teal-500" />
+            <h3 className="text-lg font-semibold text-foreground">Husbandry Hub</h3>
+          </div>
+          <div className="space-y-2">
+            {hubEvents.map((event) => (
+              <HubEventCard key={event.id} event={event} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <TaskForm

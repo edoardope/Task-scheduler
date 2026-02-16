@@ -2,6 +2,8 @@ import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'path'
 import { initDatabase, saveToDisk } from './database'
 import { registerAllHandlers } from './ipc'
+import { connect, reload, isConnected } from './services/animalhub-bridge.service'
+import { getSetting } from './services/settings.service'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -40,6 +42,27 @@ app.whenReady().then(async () => {
   await initDatabase()
   registerAllHandlers()
   createWindow()
+
+  // Auto-connect to AnimalHub if path is configured
+  const hubPath = getSetting('animalhub_path')
+  if (hubPath) {
+    try {
+      await connect(hubPath)
+    } catch (e) {
+      console.error('AnimalHub auto-connect failed:', e)
+    }
+  }
+
+  // Hourly polling to reload AnimalHub data
+  setInterval(() => {
+    if (isConnected()) {
+      try {
+        reload()
+      } catch (e) {
+        console.error('AnimalHub reload failed:', e)
+      }
+    }
+  }, 3600000) // 1 hour in milliseconds
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
